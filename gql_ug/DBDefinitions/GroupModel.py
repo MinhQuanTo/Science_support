@@ -18,23 +18,24 @@ class GroupModel(BaseModel):
     __tablename__ = "groups"
 
     id = UUIDColumn()
-    name = Column(String, comment="name of the group")
-    name_en = Column(String, comment="english name of the group")
-    email = Column(String, comment="can be an email for whole group")
+    name = Column(String)
 
-    startdate = Column(DateTime, comment="born date of the group")
-    enddate = Column(DateTime, comment="date when group `died`")
-    valid = Column(Boolean, default=True, comment="if the group still exists")
+    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
 
-    grouptype_id = Column(ForeignKey("grouptypes.id"), index=True, comment="link to the group type (aka faculty)")
+    startdate = Column(DateTime)
+    enddate = Column(DateTime)
+    valid = Column(Boolean, default=True)
+
+    grouptype_id = Column(ForeignKey("grouptypes.id"), index=True)
     grouptype = relationship("GroupTypeModel", back_populates="groups")
 
-    mastergroup_id = Column(ForeignKey("groups.id"), index=True, comment="link to the commanding group")
+    mastergroup_id = Column(ForeignKey("groups.id"), index=True)
 
     memberships = relationship("MembershipModel", back_populates="group")
     roles = relationship("RoleModel", back_populates="group")
 
-    created = Column(DateTime, server_default=sqlalchemy.sql.func.now(), comment="when record has been created")
-    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now(), comment="timestamp")
-    createdby = UUIDFKey(nullable=True, comment="who has created this record")#Column(ForeignKey("users.id"), index=True, nullable=True)
-    changedby = UUIDFKey(nullable=True, comment="who has changed this record")#Column(ForeignKey("users.id"), index=True, nullable=True)
+    created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+

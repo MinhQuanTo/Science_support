@@ -10,7 +10,6 @@ from .GroupTypeModel import GroupTypeModel
 from .RoleModel import RoleModel
 from .RoleTypeModel import RoleTypeModel
 from .RoleCategoryModel import RoleCategoryModel
-from .RoleTypeListModel import RoleTypeListModel
 
 
 

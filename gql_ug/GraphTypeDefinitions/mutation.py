@@ -45,12 +45,6 @@ class Mutation:
     from .groupTypeGQLModel import group_type_update
     group_type_update = group_type_update
 
-    from .roleListGQLModel import (
-        role_type_list_add,
-        role_type_list_remove
-    )
-    role_type_list_add_role = role_type_list_add
-    role_type_list_remove_role = role_type_list_remove
 
     # @strawberry.mutation()
     # async def createUniversity(self, info: strawberry.types.Info, name: typing.Optional[str] = "Uni") -> str:

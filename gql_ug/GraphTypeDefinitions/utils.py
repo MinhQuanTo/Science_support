@@ -167,18 +167,3 @@ inputTypeGQLMapper[int] = IntFilter
 inputTypeGQLMapper[str] = StrFilter
 inputTypeGQLMapper[datetime.datetime] = DatetimeFilter
 inputTypeGQLMapper[bool] = BoolFilter
-
-
-# from graphql.language import DirectiveLocation
-# @strawberry.input
-# class ReduceInput:
-#     id: uuid.UUID
-
-# @strawberry.directive(
-#     locations=[DirectiveLocation.FIELD], description="returns just first"
-# )
-# def reduce(value, param: ReduceInput) -> uuid.UUID :
-#     # values = [v for v in value]
-#     first = next(value, None)
-#     return [] if first is None else [first]
-# schema = strawberryA.federation.Schema(query=Query, types=(RBACObjectGQLModel, IDType), mutation=Mutation, directives=[reduce])

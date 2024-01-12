@@ -7,6 +7,4 @@ DBDefinitions: types.ModuleType = gql_ug.DBDefinitions
 Dataloaders: types.ModuleType = gql_ug.Dataloaders
 DBFeeder: types.ModuleType = gql_ug.DBFeeder
 
-# schema = GraphTypeDefinitions.schema
-
-from gql_ug.GraphTypeDefinitions import schema
+schema = GraphTypeDefinitions.schema

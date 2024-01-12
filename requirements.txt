@@ -14,7 +14,5 @@ strawberry-graphql
 click
 aiodataloader
 aiohttp
-requests
-pyjwt
 
 https://github.com/hrbolek/uoishelpers/archive/refs/heads/main.zip

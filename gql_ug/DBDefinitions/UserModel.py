@@ -25,9 +25,9 @@ class UserModel(BaseModel):
         return self.name + " " + self.surname
 
     email = Column(String)
-    startdate = Column(DateTime, comment="first date of user in the system")
-    enddate = Column(DateTime, comment="last date of user in the system")
-    valid = Column(Boolean, default=True, comment="if the user is still active")
+    valid = Column(Boolean, default=True)
+    startdate = Column(DateTime)
+    enddate = Column(DateTime)
 
     memberships = relationship("MembershipModel", back_populates="user", foreign_keys="MembershipModel.user_id")
     roles = relationship("RoleModel", back_populates="user", foreign_keys="RoleModel.user_id")
@@ -39,7 +39,9 @@ class UserModel(BaseModel):
     #     viewonly=True
     # )
 
-    created = Column(DateTime, server_default=sqlalchemy.sql.func.now(), comment="when record has been created")
-    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now(), comment="timestamp")
-    createdby = UUIDFKey(nullable=True, comment="who has created this record")#Column(ForeignKey("users.id"), index=True, nullable=True)
-    changedby = UUIDFKey(nullable=True, comment="who has changed this record")#Column(ForeignKey("users.id"), index=True, nullable=True)
+    created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+
+

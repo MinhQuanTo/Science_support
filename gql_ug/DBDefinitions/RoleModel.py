@@ -22,14 +22,15 @@ class RoleModel(BaseModel):
     group_id = Column(ForeignKey("groups.id"), index=True)
     roletype_id = Column(ForeignKey("roletypes.id"), index=True)
 
-    startdate = Column(DateTime, comment="when the role begins")
-    enddate = Column(DateTime, comment="when the role ends")
-    valid = Column(Boolean, default=True, comment="if the role is still active")
+    startdate = Column(DateTime)
+    enddate = Column(DateTime)
+    valid = Column(Boolean)
 
-    created = Column(DateTime, server_default=sqlalchemy.sql.func.now(), comment="when record has been created")
-    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now(), comment="timestamp")
-    createdby = UUIDFKey(nullable=True, comment="who has created this record")#Column(ForeignKey("users.id"), index=True, nullable=True)
-    changedby = UUIDFKey(nullable=True, comment="who has changed this record")#Column(ForeignKey("users.id"), index=True, nullable=True)
+    created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+
 
     roletype = relationship("RoleTypeModel", back_populates="roles")
     user = relationship("UserModel", back_populates="roles", foreign_keys=[user_id])

@@ -47,16 +47,3 @@ class Query:
 
     from .roleGQLModel import roles_on_user
     roles_on_user = roles_on_user
-
-    from .RBACObjectGQLModel import rbac_by_id
-    rbac_by_id = rbac_by_id
-
-    from .membershipGQLModel import (
-        membership_page,
-        membership_by_id
-    )
-    membership_page = membership_page
-    membership_by_id = membership_by_id
-
-    from .roleListGQLModel import role_type_list_by_id
-    role_type_list_by_id = role_type_list_by_id

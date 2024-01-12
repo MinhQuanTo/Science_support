@@ -18,14 +18,14 @@ class RoleTypeModel(BaseModel):
     __tablename__ = "roletypes"
 
     id = UUIDColumn()
-    name = Column(String, comment="name of the type")
-    name_en = Column(String, comment="english name of the type")
+    name = Column(String)
+    name_en = Column(String)
 
     category_id = Column(ForeignKey("rolecategories.id"), index=True, nullable=True)
 
     roles = relationship("RoleModel", back_populates="roletype")
 
-    created = Column(DateTime, server_default=sqlalchemy.sql.func.now(), comment="when record has been created")
-    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now(), comment="timestamp")
-    createdby = UUIDFKey(nullable=True, comment="who has created this record")#Column(ForeignKey("users.id"), index=True, nullable=True)
-    changedby = UUIDFKey(nullable=True, comment="who has changed this record")#Column(ForeignKey("users.id"), index=True, nullable=True)
+    created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)

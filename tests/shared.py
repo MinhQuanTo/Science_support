@@ -3,12 +3,13 @@ import asyncio
 import pytest
 import logging
 import uuid
-import os
-
-os.environ.setdefault("DEMO", "True")
 
 # from ..uoishelpers.uuid import UUIDColumn
-from gql_ug.GraphTypeDefinitions import schema
+from ._imports import (
+    DBDefinitions,
+    GraphTypeDefinitions,
+    schema
+)
 
 from gql_ug.DBDefinitions import BaseModel
 from gql_ug.DBDefinitions import RoleTypeModel, RoleModel, RoleCategoryModel
@@ -60,11 +61,10 @@ def createContext(asyncSessionMaker):
     return {
         "asyncSessionMaker": asyncSessionMaker,
         "all": createLoaders(asyncSessionMaker),
-        "loaders": createLoaders(asyncSessionMaker),
     }
 
 
-useID = False
+useID = True
 def changeGQLQuery(GQLQuery):
     if useID:
         return GQLQuery.replace("UUID", "ID")

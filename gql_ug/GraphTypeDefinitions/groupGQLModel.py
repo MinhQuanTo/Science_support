@@ -3,7 +3,7 @@ import strawberry
 import uuid
 from typing import List, Optional, Union, Annotated
 from .BaseGQLModel import BaseGQLModel, IDType
-from ._GraphPermissions import RoleBasedPermission, OnlyForAuthentized
+
 from ._GraphResolvers import (
     resolve_id,
     resolve_name,
@@ -14,23 +14,13 @@ from ._GraphResolvers import (
     resolve_createdby
 )
 
-from gql_ug.Dataloaders import (
-    getLoadersFromInfo as getLoader,
-    getUserFromInfo)
+def getLoader(info):
+    return info.context["all"]
 
 GroupTypeGQLModel = Annotated["GroupTypeGQLModel", strawberry.lazy(".groupTypeGQLModel")]
 MembershipGQLModel = Annotated["MembershipGQLModel", strawberry.lazy(".membershipGQLModel")]
 RoleGQLModel = Annotated["RoleGQLModel", strawberry.lazy(".roleGQLModel")]
 
-GroupGQLModel_description = """
-# Reason
-
-Group is entity with members. 
-It can have also mastergroup.
-Mastergroup can be only one.
-Groups are organized in tree structures.
-There also can be defined roles on the group.
-"""
 @strawberry.federation.type(keys=["id"], description="""Entity representing a group""")
 class GroupGQLModel(BaseGQLModel):
     @classmethod
@@ -45,34 +35,23 @@ class GroupGQLModel(BaseGQLModel):
     lastchange = resolve_lastchange
     createdby = resolve_createdby
 
-    @strawberry.field(
-        description="""Group's validity (still exists?)""",
-        permission_classes=[OnlyForAuthentized()])
-    def email(self) -> Optional[str]:
-        result = None if not self.email else self.email
-        return result
+    @strawberry.field(description="""Group's validity (still exists?)""")
+    def valid(self) -> bool:
+        if not self.valid:
+            return False
+        else:
+            return self.valid
 
 
-    @strawberry.field(
-        description="""Group's validity (still exists?)""",
-        permission_classes=[OnlyForAuthentized()])
-    def valid(self) -> Optional[bool]:
-        result = False if not self.valid else self.valid 
-        return result
-
-    @strawberry.field(
-        description="""Group's type (like Department)""",
-        permission_classes=[OnlyForAuthentized()])
+    @strawberry.field(description="""Group's type (like Department)""")
     async def grouptype(
         self, info: strawberry.types.Info
-    ) -> Optional["GroupTypeGQLModel"]:
+    ) -> Union["GroupTypeGQLModel", None]:
         from .groupTypeGQLModel import GroupTypeGQLModel
         result = await GroupTypeGQLModel.resolve_reference(info, id=self.grouptype_id)
         return result
 
-    @strawberry.field(
-        description="""Directly commanded groups""",
-        permission_classes=[OnlyForAuthentized(isList=True)])
+    @strawberry.field(description="""Directly commanded groups""")
     async def subgroups(
         self, info: strawberry.types.Info
     ) -> List["GroupGQLModel"]:
@@ -81,18 +60,14 @@ class GroupGQLModel(BaseGQLModel):
         result = await loader.filter_by(mastergroup_id=self.id)
         return result
 
-    @strawberry.field(
-        description="""Commanding group""",
-        permission_classes=[OnlyForAuthentized()])
+    @strawberry.field(description="""Commanding group""")
     async def mastergroup(
         self, info: strawberry.types.Info
-    ) -> Optional["GroupGQLModel"]:
+    ) -> Union["GroupGQLModel", None]:
         result = await GroupGQLModel.resolve_reference(info, id=self.mastergroup_id)
         return result
 
-    @strawberry.field(
-        description="""List of users who are member of the group""",
-        permission_classes=[OnlyForAuthentized(isList=True)])
+    @strawberry.field(description="""List of users who are member of the group""")
     async def memberships(
         self, info: strawberry.types.Info
     ) -> List["MembershipGQLModel"]:
@@ -106,23 +81,13 @@ class GroupGQLModel(BaseGQLModel):
         result = await loader.filter_by(group_id=self.id)
         return result
 
-    @strawberry.field(
-        description="""List of roles in the group""",
-        permission_classes=[OnlyForAuthentized(isList=True)])
+    @strawberry.field(description="""List of roles in the group""")
     async def roles(self, info: strawberry.types.Info) -> List["RoleGQLModel"]:
         # result = await resolveRolesForGroup(session,  self.id)
         loader = getLoader(info).roles
         result = await loader.filter_by(group_id=self.id)
         return result
 
-    RBACObjectGQLModel = Annotated["RBACObjectGQLModel", strawberry.lazy(".RBACObjectGQLModel")]
-    @strawberry.field(
-        description="""""",
-        permission_classes=[OnlyForAuthentized()])
-    async def rbacobject(self, info: strawberry.types.Info) -> Optional[RBACObjectGQLModel]:
-        from .RBACObjectGQLModel import RBACObjectGQLModel
-        result = None if self.id is None else await RBACObjectGQLModel.resolve_reference(info, self.id)
-        return result    
 
 #####################################################################
 #
@@ -135,29 +100,22 @@ from dataclasses import dataclass
 @createInputs
 @dataclass
 class GroupInputWhereFilter:
-    id: uuid.UUID
     name: str
     valid: bool
     from .membershipGQLModel import MembershipInputWhereFilter
     memberships: MembershipInputWhereFilter
 
-@strawberry.field(
-    description="""Returns a list of groups (paged)""",
-    permission_classes=[OnlyForAuthentized()])
+@strawberry.field(description="""Returns a list of groups (paged)""")
 async def group_page(
     self, info: strawberry.types.Info, skip: int = 0, limit: int = 10,
-    where: Optional[GroupInputWhereFilter] = None,
-    orderby: Optional[str] = None,
-    desc: Optional[bool] = None
+    where: Optional[GroupInputWhereFilter] = None
 ) -> List[GroupGQLModel]:
     wheredict = None if where is None else strawberry.asdict(where)
     loader = getLoader(info).groups
-    result = await loader.page(skip, limit, where=wheredict, orderby=orderby, desc=desc)
+    result = await loader.page(skip, limit, where=wheredict)
     return result
 
-@strawberry.field(
-    description="""Finds a group by its id""",
-    permission_classes=[OnlyForAuthentized()])
+@strawberry.field(description="""Finds a group by its id""")
 async def group_by_id(
     self, info: strawberry.types.Info, id: IDType
 ) -> Union[GroupGQLModel, None]:
@@ -165,9 +123,7 @@ async def group_by_id(
     return result
 
 @strawberry.field(
-    description="""Finds an user by letters in name and surname, letters should be atleast three""",
-    deprecation_reason='replaced by `query($letters: String!){groupPage(where: {name: {_like: $letters}}) { id name }}`',
-    permission_classes=[OnlyForAuthentized()]
+    description="""Finds an user by letters in name and surname, letters should be atleast three"""
 )
 async def group_by_letters(
     self,
@@ -214,22 +170,18 @@ class GroupUpdateGQLModel:
     id: IDType
     lastchange: datetime.datetime
     name: Optional[str] = None
-    name_en: Optional[str] = None
     grouptype_id: Optional[uuid.UUID] = None
     mastergroup_id: Optional[uuid.UUID] = None
     valid: Optional[bool] = None
-    changedby: strawberry.Private[uuid.UUID] = None
 
 
 @strawberry.input
 class GroupInsertGQLModel:
     name: str
-    grouptype_id: uuid.UUID
     id: Optional[uuid.UUID] = None
-    name_en: Optional[str] = None
+    grouptype_id: Optional[uuid.UUID] = None
     mastergroup_id: Optional[uuid.UUID] = None
     valid: Optional[bool] = None
-    createdby: strawberry.Private[uuid.UUID] = None
 
 @strawberry.type
 class GroupResultGQLModel:
@@ -243,67 +195,65 @@ class GroupResultGQLModel:
         print("GroupResultGQLModel", result.id, result.name, flush=True)
         return result
 
-@strawberry.mutation(
-    description="""Allows a update of group, also it allows to change the mastergroup of the group""",
-    permission_classes=[OnlyForAuthentized()])
+@strawberry.mutation(description="""
+    Allows a update of group, also it allows to change the mastergroup of the group
+""")
 async def group_update(self, info: strawberry.types.Info, group: GroupUpdateGQLModel) -> GroupResultGQLModel:
-    user = getUserFromInfo(info)
-    group.changedby = user["id"]
     loader = getLoader(info).groups
     
     updatedrow = await loader.update(group)
     #print(updatedrow, updatedrow.id, updatedrow.name, flush=True)
-    id = group.id
-    msg = "fail" if updatedrow is None else "ok"
-    return GroupResultGQLModel(id=id, msg=msg)   
+    if updatedrow is None:
+        return GroupResultGQLModel(id=group.id, msg="fail")
+    else:
+        return GroupResultGQLModel(id=group.id, msg="ok")
+    
 
-@strawberry.mutation(
-    description="""Allows a update of group, also it allows to change the mastergroup of the group""",
-    permission_classes=[OnlyForAuthentized()])
+@strawberry.mutation(description="""
+    Allows a update of group, also it allows to change the mastergroup of the group
+""")
 async def group_insert(self, info: strawberry.types.Info, group: GroupInsertGQLModel) -> GroupResultGQLModel:
-    user = getUserFromInfo(info)
-    group.createdby = user["id"]
     loader = getLoader(info).groups
     
     updatedrow = await loader.insert(group)
     print("group_insert", updatedrow, updatedrow.id, updatedrow.name, flush=True)
     result = GroupResultGQLModel()
     result.id = updatedrow.id
-    result.msg = "fail" if updatedrow is None else "ok"
-        
+    result.msg = "ok"
+
+    if updatedrow is None:
+        result.msg = "fail"
+    
     return result
 
-# @strawberry.mutation(
-#     description="""Allows to assign the group to8 specified master group""",
-#     permission_classes=[OnlyForAuthentized()])
-# async def group_update_master(self, 
-#     info: strawberry.types.Info, 
-#     master_id: IDType,
-#     group: GroupUpdateGQLModel) -> GroupResultGQLModel:
-
-#     user = getUserFromInfo(info)
-#     group.createdby = user["id"]
-#     loader = getLoader(info).groups
+@strawberry.mutation(description="""
+        Allows to assign the group to8 specified master group
+    """)
+async def group_update_master(self, 
+    info: strawberry.types.Info, 
+    master_id: IDType,
+    group: GroupUpdateGQLModel) -> GroupResultGQLModel:
+    loader = getLoader(info).groups
     
-#     result = GroupResultGQLModel()
-#     result.id = group.id
-#     result.msg = "ok"
+    result = GroupResultGQLModel()
+    result.id = group.id
+    result.msg = "ok"
 
-#     #use asyncio.gather here
-#     updatedrow = await loader.load(group.id)
-#     if updatedrow is None:
-#         result.msg = "fail"
-#         return result
+    #use asyncio.gather here
+    updatedrow = await loader.load(group.id)
+    if updatedrow is None:
+        result.msg = "fail"
+        return result
 
-#     masterrow = await loader.load(master_id)
-#     if masterrow is None:
-#         result.msg = "fail"
-#         return result
+    masterrow = await loader.load(master_id)
+    if masterrow is None:
+        result.msg = "fail"
+        return result
 
-#     updatedrow.master_id = master_id
-#     updatedrow = await loader.update(updatedrow)
+    updatedrow.master_id = master_id
+    updatedrow = await loader.update(updatedrow)
     
-#     if updatedrow is None:
-#         result.msg = "fail"
+    if updatedrow is None:
+        result.msg = "fail"
     
-#     return result
+    return result
