@@ -107,9 +107,7 @@ def createInputs(cls):
     #print("topOp")
     #print(topOp)
        
-    ####################################
-    # make all ops global in this module
-    ####################################
+    
     result = [whereOp, andOp, orOp, *inputTypes]
     this = sys.modules[__name__]
     for r in result:
