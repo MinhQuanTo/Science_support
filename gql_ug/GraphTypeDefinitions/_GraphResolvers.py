@@ -4,38 +4,47 @@ import datetime
 import typing
 from .BaseGQLModel import IDType
 
+# Definuje lazy typy pro modely User a Group pomocí Annotated a strawberry.lazy.
 UserGQLModel = typing.Annotated["UserGQLModel", strawberry.lazy(".userGQLModel")]
 GroupGQLModel = typing.Annotated["GroupGQLModel", strawberry.lazy(".groupGQLModel")]
 
+# Resolver pro získání primárního klíče entity.
 @strawberry.field(description="""Entity primary key""")
 def resolve_id(self) -> IDType:
     return self.id
 
+# Resolver pro získání jména entity.
 @strawberry.field(description="""Name """)
 def resolve_name(self) -> str:
     return self.name
 
+# Resolver pro získání anglického jména entity.
 @strawberry.field(description="""English name""")
 def resolve_name_en(self) -> str:
     return self.name_en
 
+# Resolver pro získání času poslední aktualizace entity.
 @strawberry.field(description="""Time of last update""")
 def resolve_lastchange(self) -> datetime.datetime:
     return self.lastchange
 
+# Resolver pro získání času vytvoření entity.
 @strawberry.field(description="""Time of entity introduction""")
 def resolve_created(self) -> typing.Optional[datetime.datetime]:
     return self.lastchange
 
+# Funkce pro asynchronní získání uživatele podle ID.
 async def resolve_user(user_id):
     from .userGQLModel import UserGQLModel
     result = None if user_id is None else await UserGQLModel.resolve_reference(user_id)
     return result
-    
+
+# Resolver pro získání informací o tom, kdo vytvořil entitu.
 @strawberry.field(description="""Who created entity""")
 async def resolve_createdby(self) -> typing.Optional["UserGQLModel"]:
     return await resolve_user(self.created_by)
 
+# Resolver pro získání informací o tom, kdo provedl poslední změnu entity.
 @strawberry.field(description="""Who made last change""")
 async def resolve_changedby(self) -> typing.Optional["UserGQLModel"]:
     return await resolve_user(self.changedby)
@@ -50,7 +59,7 @@ resolve_result_id: IDType = strawberry.field(description="primary key of CU oper
 resolve_result_msg: str = strawberry.field(description="""Should be `ok` if descired state has been reached, otherwise `fail`.
 For update operation fail should be also stated when bad lastchange has been entered.""")
 
-
+# Vytvoří resolver pro skalární atribut entity.
 def createAttributeScalarResolver(
     scalarType: None = None, 
     foreignKeyName: str = None,
@@ -73,6 +82,7 @@ def createAttributeScalarResolver(
         return result
     return foreignkeyScalar
 
+# Vytvoří resolver pro vektorový atribut entity.
 def createAttributeVectorResolver(
     scalarType: None = None, 
     whereFilterType: None = None,
@@ -102,6 +112,7 @@ def createAttributeVectorResolver(
         return result
     return foreignkeyVector
 
+# Vytvoří kořenový resolver pro získání entity podle jejího ID.
 def createRootResolver_by_id(scalarType: None, description="Retrieves item by its id"):
     assert scalarType is not None
     @strawberry.field(description=description)
@@ -112,6 +123,7 @@ def createRootResolver_by_id(scalarType: None, description="Retrieves item by it
         return result
     return by_id
 
+# Vytvoří kořenový resolver pro stránkované získání entit.
 def createRootResolver_by_page(
     scalarType: None, 
     whereFilterType: None,
