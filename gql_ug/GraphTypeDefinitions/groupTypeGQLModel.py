@@ -15,19 +15,24 @@ from ._GraphResolvers import (
     resolve_createdby
 )
 
+# Funkce pro získání loaderu z kontextu GraphQL dotazu.
 def getLoader(info):
     return info.context["all"]
 
+# Anotace pro lenivé načítání modelu GroupGQLModel.
 GroupGQLModel = Annotated["GroupGQLModel", strawberry.lazy(".groupGQLModel")]
 
+# Definice GraphQL modelu pro typ skupiny s příslušnými resolvery a metodami.
 @strawberry.federation.type(
     keys=["id"], description="""Entity representing a group type (like Faculty)"""
 )
 class GroupTypeGQLModel(BaseGQLModel):
+    # Metoda pro získání loaderu specifického pro typy skupin.
     @classmethod
     def getLoader(cls, info):
         return getLoader(info).grouptypes
-        
+
+    # Definice polí modelu s použitím předem definovaných resolvers.
     id = resolve_id
     name = resolve_name
     name_en = resolve_name_en
@@ -36,6 +41,7 @@ class GroupTypeGQLModel(BaseGQLModel):
     lastchange = resolve_lastchange
     createdby = resolve_createdby
 
+    # Resolver pro získání seznamu skupin, které mají tento typ.
     @strawberry.field(description="""List of groups which have this type""")
     async def groups(
         self, info: strawberry.types.Info
@@ -53,6 +59,7 @@ class GroupTypeGQLModel(BaseGQLModel):
 from .utils import createInputs
 from dataclasses import dataclass
 # MembershipInputWhereFilter = Annotated["MembershipInputWhereFilter", strawberry.lazy(".membershipGQLModel")]
+# Definice vstupního filtru pro dotazování na typy skupin.
 @createInputs
 @dataclass
 class GroupTypeInputWhereFilter:
@@ -61,6 +68,7 @@ class GroupTypeInputWhereFilter:
     # from .membershipGQLModel import MembershipInputWhereFilter
     # memberships: MembershipInputWhereFilter
 
+# Resolver pro stránkované získání typů skupin.
 @strawberry.field(description="""Returns a list of groups types (paged)""")
 async def group_type_page(
     self, info: strawberry.types.Info, skip: int = 0, limit: int = 20,
@@ -71,6 +79,7 @@ async def group_type_page(
     result = await loader.page(skip, limit, where=wheredict)
     return result
 
+# Resolver pro získání typu skupiny podle ID.
 @strawberry.field(description="""Finds a group type by its id""")
 async def group_type_by_id(
     self, info: strawberry.types.Info, id: IDType
@@ -86,6 +95,7 @@ async def group_type_by_id(
 #####################################################################
 import datetime
 
+# Definice input modelů pro mutace aktualizace a vložení typů skupin.
 @strawberry.input
 class GroupTypeUpdateGQLModel:
     id: IDType
@@ -99,6 +109,7 @@ class GroupTypeInsertGQLModel:
     name: Optional[str] = None
     name_en: Optional[str] = None
 
+# Definice typu pro výsledek operací s typy skupin.
 @strawberry.type
 class GroupTypeResultGQLModel:
     id: IDType = None
@@ -108,7 +119,8 @@ class GroupTypeResultGQLModel:
     async def group_type(self, info: strawberry.types.Info) -> Union[GroupTypeGQLModel, None]:
         result = await GroupTypeGQLModel.resolve_reference(info, self.id)
         return result
-    
+
+# Mutace pro aktualizaci typu skupiny.
 @strawberry.mutation(description="""
         Allows a update of group, also it allows to change the mastergroup of the group
     """)
@@ -124,6 +136,7 @@ async def group_type_update(self, info: strawberry.types.Info, group_type: Group
     
     return result
 
+# Mutace pro vložení nového typu skupiny.
 @strawberry.mutation(description="""
     Inserts a group
 """)
