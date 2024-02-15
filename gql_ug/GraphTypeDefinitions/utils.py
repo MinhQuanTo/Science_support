@@ -5,20 +5,27 @@ from dataclasses import dataclass
 import datetime
 import logging
 
+# Initialize a global dictionary to map Python types to GraphQL input types for filtering
 inputTypeGQLMapper = {}
 
+# Decorator function to create GraphQL input types for filtering based on class annotations
 def createInputs(cls):
+    # Extract class name to use in defining new GraphQL types
     clsname = cls.__name__
     print(f"GQL definitions for {clsname}")
     #whereName = clsname + "_where"
+
+    # Define names for the dynamically generated input types for logical operations
     whereName = clsname
     orName = clsname + "_or"
     andName = clsname + "_and"
 
+    # Extract field names and their types from the class for generating filter inputs
     fieldNames = [field_name for field_name in cls.__annotations__]
     opNames = [clsname + "_" + field_name for field_name in fieldNames]
     types = [field for field in cls.__annotations__.values()]
 
+    # Helper function to generate custom input types for each field, supporting various operations
     def createCustomInput(field, name, baseType = str):
         result = inputTypeGQLMapper.get(baseType, None)
         if result is None:
@@ -41,11 +48,13 @@ def createInputs(cls):
             print(f"Using GQL type for {(baseType)} ({result})")
         return   result
 
+    # Create custom input types for all fields in the class.
     inputTypes = [
         createCustomInput(field, name, baseType)
         for field, name, baseType in zip(fieldNames, opNames, types)
     ]
-    
+
+    # Creates a dictionary mapping field names to their custom input types, marking them as optional.
     inputTypesDict = {
         fieldName: typing.Optional[inputType]
         for fieldName, inputType in zip(fieldNames, inputTypes)
@@ -54,6 +63,7 @@ def createInputs(cls):
     #print("inputTypesDict")
     #print(inputTypesDict)
 
+    # Define functions to create 'Or', 'And', and 'Where' operations based on the custom input types.
     def createOr():
         result = type(orName, (object,), {})
         anotations = {
@@ -107,7 +117,7 @@ def createInputs(cls):
     #print("topOp")
     #print(topOp)
        
-    
+    # Register the generated types in the global namespace and input type mapper
     result = [whereOp, andOp, orOp, *inputTypes]
     this = sys.modules[__name__]
     for r in result:
@@ -120,6 +130,7 @@ def createInputs(cls):
     return whereOp
     #return inputTypes
 
+# Define custom Strawberry input types for basic data types to support various filter operations
 @strawberry.input(description="Str filter methods, only one constrain allowed")
 class StrFilter:
     _eq: typing.Optional[str] = strawberry.field(name="_eq", description="operation for select.filter() method", default=None)
@@ -160,6 +171,7 @@ class UuidFilter:
     _eq: typing.Optional[uuid.UUID] = strawberry.field(name="_eq", description="operation for select.filter() method", default=None)
     _in: typing.Optional[typing.List[uuid.UUID]] = strawberry.field(name="_in", description="operation for select.filter() method", default=None)
 
+# Register custom filter types for UUID, int, str, datetime, and bool types in the global mapper
 inputTypeGQLMapper[uuid.UUID] = UuidFilter
 inputTypeGQLMapper[int] = IntFilter
 inputTypeGQLMapper[str] = StrFilter
